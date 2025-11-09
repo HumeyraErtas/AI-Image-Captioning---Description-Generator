@@ -1,7 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .config import DATABASE_URL
-from .models import Base
+
+try:
+    from .config import DATABASE_URL
+    from .models import Base
+except ImportError:
+    # When running as a script
+    from config import DATABASE_URL
+    from models import Base
 
 # Engine
 engine = create_engine(

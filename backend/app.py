@@ -5,10 +5,19 @@ from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-from .config import UPLOAD_FOLDER
-from .database import SessionLocal, init_db
-from .models import Caption
-from .caption_service import generate_captions
+# Try package-relative imports (works when running as a package: python -m backend.app)
+# Fall back to plain imports when the file is executed directly (python backend/app.py)
+try:
+    from .config import UPLOAD_FOLDER
+    from .database import SessionLocal, init_db
+    from .models import Caption
+    from .caption_service import generate_captions
+except ImportError:
+    # Running as a script: the package context may be missing, import from local module names
+    from config import UPLOAD_FOLDER
+    from database import SessionLocal, init_db
+    from models import Caption
+    from caption_service import generate_captions
 
 # Flask app
 app = Flask(__name__)
@@ -17,10 +26,22 @@ CORS(app)  # Streamlit'ten gelen istekler için CORS
 # Upload klasörünü oluştur
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+@app.route("/", methods=["GET"])
+def index():
+    """Ana sayfa - API endpoints listesi."""
+    return jsonify({
+        "name": "AI Image Captioning API",
+        "endpoints": {
+            "GET /": "Bu API dokümantasyonu",
+            "GET /health": "API durum kontrolü",
+            "POST /api/caption": "Görüntü yükleyip açıklama üretme",
+            "GET /api/history": "Önceki açıklamaları listeleme",
+            "GET /images/<filename>": "Yüklenmiş görselleri görüntüleme"
+        }
+    })
 
-@app.before_first_request
-def setup():
-    """İlk istekte DB tablolarını oluştur."""
+# DB tablolarını başlangıçta oluştur
+with app.app_context():
     init_db()
 
 
